@@ -3,14 +3,12 @@ build:
   steps:
     - eas/checkout
     - eas/install_node_modules
-    - eas/resolve_apple_team_if_needed
     - eas/configure_ios_credentials
     - id: install_keyboard_profile
       name: Install TamilKaramKeyboard provisioning profile
       run: |
         mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-        echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d \
-          > "$HOME/Library/MobileDevice/Provisioning Profiles/TamilKaramKeyboard.mobileprovision"
-        echo "✅ Keyboard extension profile installed"
+        echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > "$HOME/Library/MobileDevice/Provisioning Profiles/TamilKaramKeyboard.mobileprovision"
+        echo "Keyboard extension profile installed"
     - eas/run_fastlane
-    - eas/upload_artifact
+    - eas/find_and_upload_build_artifacts
