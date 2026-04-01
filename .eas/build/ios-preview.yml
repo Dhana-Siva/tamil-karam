@@ -4,6 +4,7 @@ build:
     - eas/checkout
     - eas/install_node_modules
     - eas/configure_ios_credentials
+    - eas/generate_gymfile_from_template
     - id: install_keyboard_profile
       name: Install TamilKaramKeyboard provisioning profile
       run: |
