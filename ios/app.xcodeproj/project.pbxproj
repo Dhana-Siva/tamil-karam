@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		03F4081F58824FFB9FB3F65E /* TamilKaramKeyboard.appex in Copy Files */ = {isa = PBXBuildFile; fileRef = 25DE572CF1EB40E8B8698EAC /* TamilKaramKeyboard.appex */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		249D45F0E9028560A7383985 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B43FBF037FE824A1731713 /* ExpoModulesProvider.swift */; };
 		2E31671F340C8374546BF4C5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 56F8A3026B2C24D7429A7A6A /* PrivacyInfo.xcprivacy */; };
@@ -20,17 +19,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		59024CEF72DD42039F37129B /* Copy Files */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				03F4081F58824FFB9FB3F65E /* TamilKaramKeyboard.appex in Copy Files */,
-			);
-			name = "Copy Files";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		B45C4ED60C2EB3030C9CCD20 /* Embed App Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -203,7 +191,6 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				A728511F65CFCDFEE9F80A48 /* [CP] Embed Pods Frameworks */,
-				59024CEF72DD42039F37129B /* Copy Files */,
 				B45C4ED60C2EB3030C9CCD20 /* Embed App Extensions */,
 			);
 			buildRules = (
