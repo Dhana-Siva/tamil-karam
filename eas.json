@@ -1,0 +1,26 @@
+{
+  "cli": {
+    "version": ">= 16.0.0"
+  },
+  "build": {
+    "preview": {
+      "ios": {
+        "simulator": false,
+        "distribution": "internal"
+      }
+    },
+    "production": {
+      "ios": {
+        "distribution": "store"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "dhanasiva@msn.com",
+        "appleTeamId": "H72SV43N57"
+      }
+    }
+  }
+}
