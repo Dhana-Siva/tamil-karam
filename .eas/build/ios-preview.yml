@@ -17,7 +17,7 @@ build:
         # 1. Install CocoaPods dependencies
         echo "=== Installing CocoaPods ==="
         cd "$PROJECT_ROOT/ios"
-        pod install --deployment
+        pod install
         cd "$PROJECT_ROOT"
         echo "Pods installed successfully"
 
