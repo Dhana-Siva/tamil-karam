@@ -16,21 +16,30 @@ build:
         cd "$PROJECT_ROOT/ios"
         pod install
         cd "$PROJECT_ROOT"
-        echo "Pods installed successfully"
+        echo "Pods installed"
 
         # 2. Install keyboard extension provisioning profile
         echo "=== Installing keyboard extension profile ==="
         PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
         mkdir -p "$PROFILES_DIR"
-        echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > "$PROFILES_DIR/TamilKaramKeyboard.mobileprovision"
-        echo "Keyboard profile installed"
+        echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > /tmp/keyboard.mobileprovision
+        KEYBOARD_UUID=$(security cms -D -i /tmp/keyboard.mobileprovision | python3 -c "import sys,plistlib; print(plistlib.loads(sys.stdin.buffer.read())['UUID'])")
+        echo "Keyboard profile UUID: $KEYBOARD_UUID"
+        cp /tmp/keyboard.mobileprovision "$PROFILES_DIR/$KEYBOARD_UUID.mobileprovision"
+        echo "Profile installed as $KEYBOARD_UUID.mobileprovision"
 
-        # 3. Write Gymfile for Ad Hoc device build
+        # 3. Patch project.pbxproj: replace name specifier with direct UUID
+        PBXPROJ="$PROJECT_ROOT/ios/app.xcodeproj/project.pbxproj"
+        sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = \"Tamil Karam Keyboard AdHoc\";/PROVISIONING_PROFILE = \"$KEYBOARD_UUID\";/g" "$PBXPROJ"
+        echo "pbxproj updated with keyboard UUID"
+
+        # 4. Write Gymfile for Ad Hoc device build
         echo "=== Creating Gymfile ==="
         printf '%s\n' \
           'workspace("app.xcworkspace")' \
           'scheme("app")' \
           'clean(false)' \
+          'export_method("ad-hoc")' \
           'export_options({' \
           '  method: "ad-hoc",' \
           '  teamID: "H72SV43N57",' \
