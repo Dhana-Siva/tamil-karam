@@ -3,6 +3,10 @@ build:
   steps:
     - eas/checkout
     - eas/install_node_modules
+    - id: install_pods
+      name: Install CocoaPods dependencies
+      run: |
+        cd ios && pod install
     - eas/configure_ios_credentials
     - eas/generate_gymfile_from_template
     - id: install_keyboard_profile
