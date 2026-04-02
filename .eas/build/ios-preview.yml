@@ -5,16 +5,13 @@ build:
     - eas/install_node_modules
     - eas/configure_ios_credentials
     - id: prepare_build
-      name: Install pods, keyboard profile, and create Gymfile
+      name: Install pods, keyboard profile, create Gymfile
       run: |
         set -euo pipefail
-
-        # Capture project root so we always know where we are
         PROJECT_ROOT="$(pwd)"
         echo "Project root: $PROJECT_ROOT"
-        ls "$PROJECT_ROOT/ios" | head -5
 
-        # 1. Install CocoaPods dependencies
+        # 1. Install CocoaPods
         echo "=== Installing CocoaPods ==="
         cd "$PROJECT_ROOT/ios"
         pod install
@@ -26,9 +23,36 @@ build:
         PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
         mkdir -p "$PROFILES_DIR"
         echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > "$PROFILES_DIR/TamilKaramKeyboard.mobileprovision"
-        echo "Keyboard profile installed"
 
-        # 3. Write Gymfile for Ad Hoc device build (not simulator)
+        # 3. Extract UUID from the keyboard profile
+        KEYBOARD_UUID=$(security cms -D -i "$PROFILES_DIR/TamilKaramKeyboard.mobileprovision" 2>/dev/null \
+          | python3 -c "import sys, plistlib; print(plistlib.loads(sys.stdin.buffer.read())['UUID'])")
+        echo "Keyboard profile UUID: $KEYBOARD_UUID"
+
+        # 4. Inject UUID into project.pbxproj for both keyboard extension configurations
+        PBXPROJ="$PROJECT_ROOT/ios/app.xcodeproj/project.pbxproj"
+        python3 -c "
+import re, sys
+uuid = sys.argv[1]
+with open(sys.argv[2], 'r') as f:
+    content = f.read()
+# Insert PROVISIONING_PROFILE after CODE_SIGN_STYLE = Manual; in keyboard sections
+# Only in sections that contain app.tamilkaram.keyboard
+def patch_section(m):
+    section = m.group(0)
+    if 'app.tamilkaram.keyboard' in section and 'PROVISIONING_PROFILE' not in section:
+        section = section.replace(
+            'CODE_SIGN_STYLE = Manual;',
+            'CODE_SIGN_STYLE = Manual;\n\t\t\t\tPROVISIONING_PROFILE = \"' + uuid + '\";'
+        )
+    return section
+content = re.sub(r'buildSettings = \{[^}]+\}', patch_section, content, flags=re.DOTALL)
+with open(sys.argv[2], 'w') as f:
+    f.write(content)
+print('Injected PROVISIONING_PROFILE into project.pbxproj')
+" "$KEYBOARD_UUID" "$PBXPROJ"
+
+        # 5. Write Gymfile for Ad Hoc device build
         echo "=== Creating Gymfile ==="
         printf '%s\n' \
           'workspace("app.xcworkspace")' \
@@ -40,8 +64,7 @@ build:
           '  compileBitcode: false,' \
           '  uploadBitcode: false' \
           '})' > "$PROJECT_ROOT/ios/Gymfile"
-        echo "Gymfile written:"
-        cat "$PROJECT_ROOT/ios/Gymfile"
+        echo "Gymfile created"
 
     - eas/run_fastlane
     - eas/find_and_upload_build_artifacts

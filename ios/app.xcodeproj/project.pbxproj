@@ -397,7 +397,8 @@
 		0EDB462EFD4246C980EBAE06 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = H72SV43N57;
 				INFOPLIST_FILE = TamilKaramKeyboard/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -483,7 +484,8 @@
 		4578D6B268D947D09EB09CF2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = H72SV43N57;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
