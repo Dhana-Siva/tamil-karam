@@ -3,17 +3,40 @@ build:
   steps:
     - eas/checkout
     - eas/install_node_modules
-    - id: install_pods
-      name: Install CocoaPods dependencies
-      run: |
-        cd ios && pod install
     - eas/configure_ios_credentials
-    - eas/generate_gymfile_from_template
-    - id: install_keyboard_profile
-      name: Install TamilKaramKeyboard provisioning profile
+    - id: prepare_build
+      name: Install pods, keyboard profile, and create Gymfile
       run: |
-        mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-        echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > "$HOME/Library/MobileDevice/Provisioning Profiles/TamilKaramKeyboard.mobileprovision"
-        echo "Keyboard extension profile installed"
+        set -euo pipefail
+
+        # 1. Install CocoaPods dependencies
+        echo "=== Installing CocoaPods ==="
+        cd ios && pod install --deployment && cd ..
+        echo "Pods installed successfully"
+
+        # 2. Install keyboard extension provisioning profile
+        echo "=== Installing keyboard extension profile ==="
+        PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+        mkdir -p "$PROFILES_DIR"
+        echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > "$PROFILES_DIR/TamilKaramKeyboard.mobileprovision"
+        echo "Keyboard profile installed"
+
+        # 3. Write Gymfile explicitly for Ad Hoc device build
+        #    (bypasses generate_gymfile_from_template which defaults to Simulator)
+        echo "=== Creating Gymfile ==="
+        cat > ios/Gymfile << 'GYMEOF'
+workspace("app.xcworkspace")
+scheme("app")
+clean(false)
+export_options({
+  method: "ad-hoc",
+  teamID: "H72SV43N57",
+  compileBitcode: false,
+  uploadBitcode: false
+})
+GYMEOF
+        echo "Gymfile written:"
+        cat ios/Gymfile
+
     - eas/run_fastlane
     - eas/find_and_upload_build_artifacts
