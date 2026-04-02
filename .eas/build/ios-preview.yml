@@ -9,9 +9,16 @@ build:
       run: |
         set -euo pipefail
 
+        # Capture project root so we always know where we are
+        PROJECT_ROOT="$(pwd)"
+        echo "Project root: $PROJECT_ROOT"
+        ls "$PROJECT_ROOT/ios" | head -5
+
         # 1. Install CocoaPods dependencies
         echo "=== Installing CocoaPods ==="
-        cd ios && pod install --deployment && cd ..
+        cd "$PROJECT_ROOT/ios"
+        pod install --deployment
+        cd "$PROJECT_ROOT"
         echo "Pods installed successfully"
 
         # 2. Install keyboard extension provisioning profile
@@ -21,7 +28,7 @@ build:
         echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > "$PROFILES_DIR/TamilKaramKeyboard.mobileprovision"
         echo "Keyboard profile installed"
 
-        # 3. Write Gymfile for Ad Hoc device build (avoid Simulator default)
+        # 3. Write Gymfile for Ad Hoc device build (not simulator)
         echo "=== Creating Gymfile ==="
         printf '%s\n' \
           'workspace("app.xcworkspace")' \
@@ -32,9 +39,9 @@ build:
           '  teamID: "H72SV43N57",' \
           '  compileBitcode: false,' \
           '  uploadBitcode: false' \
-          '})' > ios/Gymfile
+          '})' > "$PROJECT_ROOT/ios/Gymfile"
         echo "Gymfile written:"
-        cat ios/Gymfile
+        cat "$PROJECT_ROOT/ios/Gymfile"
 
     - eas/run_fastlane
     - eas/find_and_upload_build_artifacts
