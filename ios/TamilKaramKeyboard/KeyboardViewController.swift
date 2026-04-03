@@ -7,7 +7,7 @@ class KeyboardViewController: UIInputViewController {
 
     private lazy var fixButton: UIButton = {
         let btn = UIButton(type: .system)
-        btn.setTitle("\u2713  Fix Tamil Grammar", for: .normal)
+        btn.setTitle("✓  Fix Tamil Grammar", for: .normal)
         btn.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
         btn.backgroundColor = UIColor(red: 0.90, green: 0.22, blue: 0.27, alpha: 1)
         btn.setTitleColor(.white, for: .normal)
@@ -68,7 +68,7 @@ class KeyboardViewController: UIInputViewController {
         let text    = (before + after).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { setStatus("No text found. Type some Tamil first."); return }
 
-        setLoading(true); setStatus("Fixing grammar\u2026")
+        setLoading(true); setStatus("Fixing grammar…")
 
         guard let url = URL(string: workerURL) else { return }
         var req = URLRequest(url: url, timeoutInterval: 15)
@@ -91,7 +91,7 @@ class KeyboardViewController: UIInputViewController {
                 for _ in 0..<ac  { self?.textDocumentProxy.adjustTextPosition(byCharacterOffset: 1) }
                 for _ in 0..<(bc + ac) { self?.textDocumentProxy.deleteBackward() }
                 self?.textDocumentProxy.insertText(corrected)
-                self?.setStatus("\u2705 Done!")
+                self?.setStatus("✅ Done!")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     self?.setStatus("Type Tamil, then tap Fix")
                 }
