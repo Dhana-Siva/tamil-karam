@@ -1,54 +1,61 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- Background with gradient -->
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#c0392b"/>
       <stop offset="100%" style="stop-color:#8e1a10"/>
     </linearGradient>
-    <linearGradient id="handGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.95"/>
-      <stop offset="100%" style="stop-color:#f0d9d9;stop-opacity:0.9"/>
+    <linearGradient id="skinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#e8c8c8;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="armGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e0c0c0"/>
+      <stop offset="50%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#e0c0c0"/>
     </linearGradient>
   </defs>
 
-  <!-- Rounded square background -->
+  <!-- Background -->
   <rect width="1024" height="1024" rx="230" ry="230" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="230" ry="230" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="18"/>
 
-  <!-- Subtle inner glow -->
-  <rect width="1024" height="1024" rx="230" ry="230" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="20"/>
+  <!-- Forearm (comes from bottom center) -->
+  <rect x="420" y="780" width="184" height="280" rx="92" fill="url(#armGrad)"/>
 
-  <!-- Hand shape (open palm, fingers up) -->
-  <!-- Palm base -->
-  <ellipse cx="512" cy="780" rx="155" ry="95" fill="url(#handGrad)"/>
+  <!-- Wrist transition -->
+  <ellipse cx="512" cy="780" rx="110" ry="40" fill="url(#skinGrad)"/>
 
-  <!-- Thumb -->
-  <ellipse cx="330" cy="710" rx="42" ry="95" fill="url(#handGrad)" transform="rotate(-25 330 710)"/>
+  <!-- Palm -->
+  <ellipse cx="512" cy="660" rx="145" ry="130" fill="url(#skinGrad)"/>
+
+  <!-- Thumb (left side, angled outward) -->
+  <rect x="330" y="590" width="65" height="155" rx="32" fill="url(#skinGrad)" transform="rotate(-20 362 590)"/>
 
   <!-- Index finger -->
-  <rect x="358" y="520" width="68" height="210" rx="34" fill="url(#handGrad)"/>
+  <rect x="390" y="390" width="62" height="220" rx="31" fill="url(#skinGrad)"/>
 
-  <!-- Middle finger -->
-  <rect x="444" y="490" width="68" height="240" rx="34" fill="url(#handGrad)"/>
+  <!-- Middle finger (tallest) -->
+  <rect x="466" y="360" width="64" height="250" rx="32" fill="url(#skinGrad)"/>
 
   <!-- Ring finger -->
-  <rect x="530" y="505" width="68" height="225" rx="34" fill="url(#handGrad)"/>
+  <rect x="544" y="375" width="62" height="235" rx="31" fill="url(#skinGrad)"/>
 
-  <!-- Pinky finger -->
-  <rect x="615" y="540" width="60" height="190" rx="30" fill="url(#handGrad)"/>
+  <!-- Pinky -->
+  <rect x="618" y="415" width="54" height="195" rx="27" fill="url(#skinGrad)"/>
 
-  <!-- Palm fill to connect fingers -->
-  <rect x="340" y="660" width="350" height="130" rx="20" fill="url(#handGrad)"/>
+  <!-- Palm fill between fingers and wrist -->
+  <rect x="375" y="590" width="320" height="160" rx="20" fill="url(#skinGrad)"/>
 
-  <!-- Tamil letter த on the palm -->
+  <!-- Tamil letter த on palm -->
   <text
     x="512"
-    y="760"
-    font-family="'Noto Sans Tamil', 'Tamil Sangam MN', Arial, sans-serif"
-    font-size="130"
+    y="700"
+    font-family="'Noto Sans Tamil', 'Tamil Sangam MN', 'InaiMathi', Arial Unicode MS, sans-serif"
+    font-size="150"
     font-weight="bold"
     text-anchor="middle"
     fill="#c0392b"
-    opacity="0.92"
+    opacity="0.88"
   >த</text>
 
 </svg>
