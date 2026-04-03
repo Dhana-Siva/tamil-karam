@@ -5,11 +5,12 @@ build:
     - eas/install_node_modules
     - eas/configure_ios_credentials
     - id: build_ios
-      name: Install pods, sign, build IPA
+      name: Install pods, sign, build IPA with xcodebuild
       run: |
         set -e
         PROJECT_ROOT="$(pwd)"
         echo "=== Project root: $PROJECT_ROOT ==="
+        echo "=== Xcode: $(xcodebuild -version | head -1) ==="
 
         # 1. Install CocoaPods
         echo "=== Installing CocoaPods ==="
@@ -19,68 +20,63 @@ build:
         echo "=== Pods installed ==="
 
         # 2. Install keyboard extension provisioning profile
-        echo "=== Installing keyboard extension profile ==="
         PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
         mkdir -p "$PROFILES_DIR"
-
         if [ -z "${KEYBOARD_PROVISIONING_PROFILE_B64:-}" ]; then
-          echo "ERROR: KEYBOARD_PROVISIONING_PROFILE_B64 is not set!"
-          exit 1
+          echo "ERROR: KEYBOARD_PROVISIONING_PROFILE_B64 not set"; exit 1
         fi
-
         echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > /tmp/keyboard.mobileprovision
         security cms -D -i /tmp/keyboard.mobileprovision > /tmp/keyboard.plist 2>&1
         KEYBOARD_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/keyboard.plist 2>/dev/null || python3 -c "import plistlib; print(plistlib.load(open('/tmp/keyboard.plist','rb'))['UUID'])" 2>/dev/null)
-        if [ -z "$KEYBOARD_UUID" ]; then
-          echo "ERROR: Could not extract keyboard profile UUID"
-          exit 1
-        fi
+        if [ -z "$KEYBOARD_UUID" ]; then echo "ERROR: UUID extraction failed"; exit 1; fi
         echo "=== Keyboard UUID: $KEYBOARD_UUID ==="
-
         cp /tmp/keyboard.mobileprovision "$PROFILES_DIR/$KEYBOARD_UUID.mobileprovision"
 
         # 3. Patch pbxproj
         PBXPROJ="$PROJECT_ROOT/ios/app.xcodeproj/project.pbxproj"
         sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = \"Tamil Karam Keyboard AdHoc\";/PROVISIONING_PROFILE_SPECIFIER = \"$KEYBOARD_UUID\";/g" "$PBXPROJ"
-        echo "=== PROVISIONING_PROFILE lines ==="
         grep "PROVISIONING_PROFILE" "$PBXPROJ" || true
 
-        # 4. Write Gymfile (no heredoc - YAML parser trips on << at column 0)
-        printf '%s\n' \
-          'workspace("app.xcworkspace")' \
-          'scheme("app")' \
-          'clean(false)' \
-          'export_method("ad-hoc")' \
-          'export_options({' \
-          '  method: "ad-hoc",' \
-          '  teamID: "H72SV43N57",' \
-          '  compileBitcode: false,' \
-          '  uploadBitcode: false' \
-          '})' > "$PROJECT_ROOT/ios/Gymfile"
-        echo "=== Gymfile written ==="
-        cat "$PROJECT_ROOT/ios/Gymfile"
-
-        # 5. Extend keychain timeout (pod install may lock it) and verify signing
-        echo "=== Keychain setup ==="
-        security list-keychains 2>&1 || true
+        # 4. Extend keychain timeout
         DEFAULT_KC=$(security default-keychain 2>/dev/null | tr -d '"' | tr -d ' ')
-        echo "Default keychain: $DEFAULT_KC"
         security set-keychain-settings -t 3600 "$DEFAULT_KC" 2>/dev/null || true
-        security unlock-keychain "$DEFAULT_KC" 2>/dev/null || true
-        echo "=== Available signing identities ==="
+        echo "=== Signing identities ==="
         security find-identity -v -p codesigning 2>&1 || true
 
-        # 6. Run fastlane gym directly
-        echo "=== Locating fastlane ==="
-        export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.gem/bin:$HOME/.rbenv/shims:$PATH"
-        echo "PATH: $PATH"
-        which fastlane 2>&1 || echo "fastlane not in PATH, searching..."
-        FASTLANE_BIN=$(which fastlane 2>/dev/null || find /opt/homebrew /usr/local /Users/expo -name fastlane -type f 2>/dev/null | head -1)
-        echo "Fastlane binary: $FASTLANE_BIN"
+        # 5. Archive with xcodebuild
+        ARCHIVE_PATH="$PROJECT_ROOT/app.xcarchive"
+        echo "=== Archiving with xcodebuild ==="
+        xcodebuild \
+          -workspace "$PROJECT_ROOT/ios/app.xcworkspace" \
+          -scheme app \
+          -configuration Release \
+          -sdk iphoneos \
+          -destination "generic/platform=iOS" \
+          -archivePath "$ARCHIVE_PATH" \
+          CODE_SIGN_STYLE=Manual \
+          archive \
+          2>&1
+        echo "=== Archive complete ==="
 
-        echo "=== Running fastlane gym ==="
-        cd "$PROJECT_ROOT/ios"
-        "$FASTLANE_BIN" gym 2>&1
-        echo "=== gym complete ==="
+        # 6. Create ExportOptions.plist
+        python3 -c "
+import plistlib, os
+opts = {'method': 'ad-hoc', 'teamID': 'H72SV43N57', 'compileBitcode': False, 'uploadBitcode': False}
+with open('/tmp/ExportOptions.plist', 'wb') as f: plistlib.dump(opts, f)
+print('ExportOptions.plist written')
+"
+
+        # 7. Export IPA
+        IPA_DIR="$PROJECT_ROOT/ipa_output"
+        mkdir -p "$IPA_DIR"
+        echo "=== Exporting IPA ==="
+        xcodebuild \
+          -exportArchive \
+          -archivePath "$ARCHIVE_PATH" \
+          -exportOptionsPlist /tmp/ExportOptions.plist \
+          -exportPath "$IPA_DIR" \
+          2>&1
+        echo "=== IPA exported to $IPA_DIR ==="
+        ls -la "$IPA_DIR/"
 
     - eas/find_and_upload_build_artifacts
