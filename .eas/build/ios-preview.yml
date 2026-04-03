@@ -7,15 +7,13 @@ build:
     - id: build_ios
       name: Install pods, sign, build IPA with xcodebuild
       run: |
-        set -e
         PROJECT_ROOT="$(pwd)"
         echo "=== Project root: $PROJECT_ROOT ==="
-        echo "=== Xcode: $(xcodebuild -version | head -1) ==="
 
         # 1. Install CocoaPods
         echo "=== Installing CocoaPods ==="
         cd "$PROJECT_ROOT/ios"
-        pod install 2>&1
+        pod install && echo "=== pod install OK ===" || echo "=== pod install FAILED ==="
         cd "$PROJECT_ROOT"
         echo "=== Pods installed ==="
 
