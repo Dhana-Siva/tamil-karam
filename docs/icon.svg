@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c0392b"/>
+      <stop offset="100%" style="stop-color:#8e1a10"/>
+    </linearGradient>
+    <linearGradient id="handGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.95"/>
+      <stop offset="100%" style="stop-color:#f0d9d9;stop-opacity:0.9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="1024" height="1024" rx="230" ry="230" fill="url(#bg)"/>
+
+  <!-- Subtle inner glow -->
+  <rect width="1024" height="1024" rx="230" ry="230" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="20"/>
+
+  <!-- Hand shape (open palm, fingers up) -->
+  <!-- Palm base -->
+  <ellipse cx="512" cy="780" rx="155" ry="95" fill="url(#handGrad)"/>
+
+  <!-- Thumb -->
+  <ellipse cx="330" cy="710" rx="42" ry="95" fill="url(#handGrad)" transform="rotate(-25 330 710)"/>
+
+  <!-- Index finger -->
+  <rect x="358" y="520" width="68" height="210" rx="34" fill="url(#handGrad)"/>
+
+  <!-- Middle finger -->
+  <rect x="444" y="490" width="68" height="240" rx="34" fill="url(#handGrad)"/>
+
+  <!-- Ring finger -->
+  <rect x="530" y="505" width="68" height="225" rx="34" fill="url(#handGrad)"/>
+
+  <!-- Pinky finger -->
+  <rect x="615" y="540" width="60" height="190" rx="30" fill="url(#handGrad)"/>
+
+  <!-- Palm fill to connect fingers -->
+  <rect x="340" y="660" width="350" height="130" rx="20" fill="url(#handGrad)"/>
+
+  <!-- Tamil letter த on the palm -->
+  <text
+    x="512"
+    y="760"
+    font-family="'Noto Sans Tamil', 'Tamil Sangam MN', Arial, sans-serif"
+    font-size="130"
+    font-weight="bold"
+    text-anchor="middle"
+    fill="#c0392b"
+    opacity="0.92"
+  >த</text>
+
+</svg>
