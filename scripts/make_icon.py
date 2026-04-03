@@ -1,88 +1,68 @@
 #!/usr/bin/env python3
-from PIL import Image, ImageDraw, ImageFont
-import math
+"""Generate TamilKaram app icon using macOS NSImage for proper Tamil rendering."""
+import Cocoa
 
 SIZE = 1024
+OUT_PATH = "/Users/dhanasiva/Documents/Claude/tamil-karam/ios/app/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png"
 
-# Create image
-img = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-draw = ImageDraw.Draw(img)
+ns_img = Cocoa.NSImage.alloc().initWithSize_((SIZE, SIZE))
+ns_img.lockFocus()
+ctx = Cocoa.NSGraphicsContext.currentContext().CGContext()
 
-# Draw blue gradient background with rounded corners
-def draw_rounded_rect_gradient(draw, size, radius, color_top, color_bottom):
-    bg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    bg_draw = ImageDraw.Draw(bg)
-    for y in range(size):
-        t = y / size
-        r = int(color_top[0] + (color_bottom[0] - color_top[0]) * t)
-        g = int(color_top[1] + (color_bottom[1] - color_top[1]) * t)
-        b = int(color_top[2] + (color_bottom[2] - color_top[2]) * t)
-        bg_draw.line([(0, y), (size, y)], fill=(r, g, b, 255))
-    # Mask with rounded rect
-    mask = Image.new("L", (size, size), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.rounded_rectangle([0, 0, size-1, size-1], radius=radius, fill=255)
-    bg.putalpha(mask)
-    return bg
+import Quartz
 
-light_blue = (93, 173, 226)
-dark_blue  = (26, 74, 138)
-bg = draw_rounded_rect_gradient(draw, SIZE, 230, light_blue, dark_blue)
-img = Image.alpha_composite(img, bg)
-draw = ImageDraw.Draw(img)
+# --- Rounded rect clip ---
+path = Quartz.CGPathCreateWithRoundedRect(
+    Quartz.CGRectMake(0, 0, SIZE, SIZE), 230, 230, None
+)
+Quartz.CGContextAddPath(ctx, path)
+Quartz.CGContextClip(ctx)
 
-# Tamil font
-tamil_font_paths = [
-    "/System/Library/Fonts/Supplemental/InaiMathi.ttf",
-    "/Library/Fonts/NotoSansTamil-Bold.ttf",
-    "/System/Library/Fonts/Tamil Sangam MN.ttc",
-]
-tamil_font = None
-for path in tamil_font_paths:
-    try:
-        tamil_font = ImageFont.truetype(path, 260)
-        print(f"Using Tamil font: {path}")
-        break
-    except:
-        pass
-if not tamil_font:
-    tamil_font = ImageFont.load_default()
+# --- Blue gradient ---
+cs = Quartz.CGColorSpaceCreateDeviceRGB()
+gradient = Quartz.CGGradientCreateWithColorComponents(
+    cs,
+    [93/255, 173/255, 226/255, 1.0,   # light blue (top)
+     26/255,  74/255, 138/255, 1.0],  # dark blue (bottom)
+    [0.0, 1.0], 2
+)
+Quartz.CGContextDrawLinearGradient(
+    ctx, gradient,
+    Quartz.CGPointMake(512, SIZE),   # top
+    Quartz.CGPointMake(512, 0),      # bottom
+    0
+)
 
-# Bottom label font (smaller)
-tamil_label = None
-for path in tamil_font_paths:
-    try:
-        tamil_label = ImageFont.truetype(path, 78)
-        break
-    except:
-        pass
-if not tamil_label:
-    tamil_label = tamil_font
+# Helper: draw text centered at (cx, cy)
+def draw_text(text, font_name, size, cx, cy, alpha=0.95):
+    font = Cocoa.NSFont.fontWithName_size_(font_name, size)
+    if not font:
+        font = Cocoa.NSFont.systemFontOfSize_(size)
+    attrs = {
+        Cocoa.NSFontAttributeName: font,
+        Cocoa.NSForegroundColorAttributeName: Cocoa.NSColor.colorWithCalibratedRed_green_blue_alpha_(1, 1, 1, alpha),
+    }
+    ns_str = Cocoa.NSAttributedString.alloc().initWithString_attributes_(text, attrs)
+    w, h = ns_str.size()
+    ns_str.drawAtPoint_((cx - w / 2, cy - h / 2))
 
-# Emoji font
-emoji_font = None
-try:
-    emoji_font = ImageFont.truetype("/System/Library/Fonts/Apple Color Emoji.ttc", 160)
-    print("Using Apple Color Emoji font")
-except Exception as e:
-    print(f"Emoji font error: {e}")
+# த (left)
+draw_text("த", "Tamil Sangam MN", 300, 175, 490)
 
-# Draw த (left)
-draw.text((100, 260), "த", font=tamil_font, fill=(255, 255, 255, 242), anchor="lt")
+# 🤝 emoji (centre)
+draw_text("🤝", "Apple Color Emoji", 200, 512, 480)
 
-# Draw ழ் (right)
-draw.text((730, 260), "ழ்", font=tamil_font, fill=(255, 255, 255, 242), anchor="lt")
+# ழ் (right)
+draw_text("ழ்", "Tamil Sangam MN", 300, 848, 490)
 
-# Draw 🤝 emoji (centre)
-if emoji_font:
-    draw.text((512, 490), "🤝", font=emoji_font, fill=(255,255,255,255), anchor="mm")
-else:
-    draw.text((512, 490), "🤝", font=tamil_font, fill=(255,255,255,255), anchor="mm")
+# தமிழ் கரம் (bottom)
+draw_text("தமிழ் கரம்", "Tamil Sangam MN", 78, 512, 100, alpha=0.85)
 
-# Draw தமிழ் கரம் (bottom)
-draw.text((512, 880), "தமிழ் கரம்", font=tamil_label, fill=(255, 255, 255, 210), anchor="mm")
+ns_img.unlockFocus()
 
-# Save
-out_path = "/Users/dhanasiva/Documents/Claude/tamil-karam/ios/app/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png"
-img.save(out_path, "PNG")
-print(f"Saved to {out_path}")
+# Save PNG
+tiff = ns_img.TIFFRepresentation()
+bitmap = Cocoa.NSBitmapImageRep.imageRepWithData_(tiff)
+png_data = bitmap.representationUsingType_properties_(Cocoa.NSBitmapImageFileTypePNG, {})
+png_data.writeToFile_atomically_(OUT_PATH, True)
+print(f"Saved: {OUT_PATH}")
