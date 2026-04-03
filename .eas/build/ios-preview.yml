@@ -45,19 +45,18 @@ build:
         echo "=== PROVISIONING_PROFILE lines ==="
         grep "PROVISIONING_PROFILE" "$PBXPROJ" || true
 
-        # 4. Write Gymfile
-        cat > "$PROJECT_ROOT/ios/Gymfile" << 'GYMEOF'
-workspace("app.xcworkspace")
-scheme("app")
-clean(false)
-export_method("ad-hoc")
-export_options({
-  method: "ad-hoc",
-  teamID: "H72SV43N57",
-  compileBitcode: false,
-  uploadBitcode: false
-})
-GYMEOF
+        # 4. Write Gymfile (no heredoc - YAML parser trips on << at column 0)
+        printf '%s\n' \
+          'workspace("app.xcworkspace")' \
+          'scheme("app")' \
+          'clean(false)' \
+          'export_method("ad-hoc")' \
+          'export_options({' \
+          '  method: "ad-hoc",' \
+          '  teamID: "H72SV43N57",' \
+          '  compileBitcode: false,' \
+          '  uploadBitcode: false' \
+          '})' > "$PROJECT_ROOT/ios/Gymfile"
         echo "=== Gymfile written ==="
         cat "$PROJECT_ROOT/ios/Gymfile"
 
