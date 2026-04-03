@@ -83,4 +83,4 @@ build:
         echo "=== IPA exported to $IPA_DIR ==="
         ls -la "$IPA_DIR/"
 
-    - eas/find_and_upload_build_artifacts
+    # eas/find_and_upload_build_artifacts removed for testing
