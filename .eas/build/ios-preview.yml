@@ -4,13 +4,69 @@ build:
     - eas/checkout
     - eas/install_node_modules
     - eas/configure_ios_credentials
-    - id: debug_env
-      name: Debug environment
+    - id: prepare_build
+      name: Install pods, keyboard profile, create Gymfile
       run: |
-        echo "=== PWD: $(pwd) ==="
-        echo "=== macOS: $(sw_vers -productVersion) ==="
-        echo "=== KEYBOARD secret set: $([ -n "${KEYBOARD_PROVISIONING_PROFILE_B64:-}" ] && echo YES || echo NO) ==="
-        echo "=== Secret length: ${#KEYBOARD_PROVISIONING_PROFILE_B64} chars ==="
-        echo "=== ls ios/ ==="
-        ls ios/
-        echo "=== Done ==="
+        set -e
+        PROJECT_ROOT="$(pwd)"
+        echo "=== Project root: $PROJECT_ROOT ==="
+
+        # 1. Install CocoaPods
+        echo "=== Installing CocoaPods ==="
+        cd "$PROJECT_ROOT/ios"
+        pod install 2>&1
+        cd "$PROJECT_ROOT"
+        echo "=== Pods installed ==="
+
+        # 2. Install keyboard extension provisioning profile
+        echo "=== Installing keyboard extension profile ==="
+        PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+        mkdir -p "$PROFILES_DIR"
+
+        if [ -z "${KEYBOARD_PROVISIONING_PROFILE_B64:-}" ]; then
+          echo "ERROR: KEYBOARD_PROVISIONING_PROFILE_B64 is not set!"
+          exit 1
+        fi
+        echo "Secret is set, length: ${#KEYBOARD_PROVISIONING_PROFILE_B64}"
+
+        echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > /tmp/keyboard.mobileprovision
+        echo "Profile decoded OK, size: $(wc -c < /tmp/keyboard.mobileprovision) bytes"
+
+        security cms -D -i /tmp/keyboard.mobileprovision > /tmp/keyboard.plist 2>&1
+        echo "CMS decode exit: $?"
+        KEYBOARD_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/keyboard.plist 2>/dev/null || true)
+        if [ -z "$KEYBOARD_UUID" ]; then
+          echo "PlistBuddy failed, trying python3..."
+          KEYBOARD_UUID=$(python3 -c "import plistlib; print(plistlib.load(open('/tmp/keyboard.plist','rb'))['UUID'])" 2>/dev/null || true)
+        fi
+        if [ -z "$KEYBOARD_UUID" ]; then
+          echo "ERROR: UUID extraction failed. Plist content:"
+          head -30 /tmp/keyboard.plist
+          exit 1
+        fi
+        echo "=== Keyboard UUID: $KEYBOARD_UUID ==="
+
+        cp /tmp/keyboard.mobileprovision "$PROFILES_DIR/$KEYBOARD_UUID.mobileprovision"
+        echo "Profile installed: $PROFILES_DIR/$KEYBOARD_UUID.mobileprovision"
+
+        # 3. Patch pbxproj
+        PBXPROJ="$PROJECT_ROOT/ios/app.xcodeproj/project.pbxproj"
+        sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = \"Tamil Karam Keyboard AdHoc\";/PROVISIONING_PROFILE_SPECIFIER = \"$KEYBOARD_UUID\";/g" "$PBXPROJ"
+        echo "=== Provisioning lines after patch: ==="
+        grep "PROVISIONING_PROFILE" "$PBXPROJ" || true
+
+        # 4. Write Gymfile
+        printf '%s\n' \
+          'workspace("app.xcworkspace")' \
+          'scheme("app")' \
+          'clean(false)' \
+          'export_method("ad-hoc")' \
+          'export_options({' \
+          '  method: "ad-hoc",' \
+          '  teamID: "H72SV43N57",' \
+          '  compileBitcode: false,' \
+          '  uploadBitcode: false' \
+          '})' > "$PROJECT_ROOT/ios/Gymfile"
+        echo "=== Gymfile written ==="
+        cat "$PROJECT_ROOT/ios/Gymfile"
+        echo "=== prepare_build DONE ==="
