@@ -71,9 +71,16 @@ build:
         security find-identity -v -p codesigning 2>&1 || true
 
         # 6. Run fastlane gym directly
+        echo "=== Locating fastlane ==="
+        export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.gem/bin:$HOME/.rbenv/shims:$PATH"
+        echo "PATH: $PATH"
+        which fastlane 2>&1 || echo "fastlane not in PATH, searching..."
+        FASTLANE_BIN=$(which fastlane 2>/dev/null || find /opt/homebrew /usr/local /Users/expo -name fastlane -type f 2>/dev/null | head -1)
+        echo "Fastlane binary: $FASTLANE_BIN"
+
         echo "=== Running fastlane gym ==="
         cd "$PROJECT_ROOT/ios"
-        fastlane gym 2>&1
+        "$FASTLANE_BIN" gym 2>&1
         echo "=== gym complete ==="
 
     - eas/find_and_upload_build_artifacts
