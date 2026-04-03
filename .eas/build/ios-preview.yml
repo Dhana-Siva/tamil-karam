@@ -4,8 +4,8 @@ build:
     - eas/checkout
     - eas/install_node_modules
     - eas/configure_ios_credentials
-    - id: prepare_build
-      name: Install pods, keyboard profile, create Gymfile
+    - id: build_ios
+      name: Install pods, sign, build IPA
       run: |
         set -e
         PROJECT_ROOT="$(pwd)"
@@ -38,29 +38,33 @@ build:
         echo "=== Keyboard UUID: $KEYBOARD_UUID ==="
 
         cp /tmp/keyboard.mobileprovision "$PROFILES_DIR/$KEYBOARD_UUID.mobileprovision"
-        echo "Profile installed: $KEYBOARD_UUID.mobileprovision"
 
-        # 3. Patch pbxproj: set UUID as PROVISIONING_PROFILE_SPECIFIER
+        # 3. Patch pbxproj
         PBXPROJ="$PROJECT_ROOT/ios/app.xcodeproj/project.pbxproj"
         sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = \"Tamil Karam Keyboard AdHoc\";/PROVISIONING_PROFILE_SPECIFIER = \"$KEYBOARD_UUID\";/g" "$PBXPROJ"
-        echo "=== Provisioning lines after patch ==="
+        echo "=== PROVISIONING_PROFILE lines ==="
         grep "PROVISIONING_PROFILE" "$PBXPROJ" || true
 
         # 4. Write Gymfile
-        printf '%s\n' \
-          'workspace("app.xcworkspace")' \
-          'scheme("app")' \
-          'clean(false)' \
-          'export_method("ad-hoc")' \
-          'export_options({' \
-          '  method: "ad-hoc",' \
-          '  teamID: "H72SV43N57",' \
-          '  compileBitcode: false,' \
-          '  uploadBitcode: false' \
-          '})' > "$PROJECT_ROOT/ios/Gymfile"
+        cat > "$PROJECT_ROOT/ios/Gymfile" << 'GYMEOF'
+workspace("app.xcworkspace")
+scheme("app")
+clean(false)
+export_method("ad-hoc")
+export_options({
+  method: "ad-hoc",
+  teamID: "H72SV43N57",
+  compileBitcode: false,
+  uploadBitcode: false
+})
+GYMEOF
         echo "=== Gymfile written ==="
         cat "$PROJECT_ROOT/ios/Gymfile"
-        echo "=== prepare_build DONE ==="
 
-    - eas/run_fastlane
+        # 5. Run fastlane gym directly
+        echo "=== Running fastlane gym ==="
+        cd "$PROJECT_ROOT/ios"
+        fastlane gym 2>&1
+        echo "=== gym complete ==="
+
     - eas/find_and_upload_build_artifacts
