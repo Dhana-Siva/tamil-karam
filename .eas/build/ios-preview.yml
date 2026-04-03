@@ -60,7 +60,17 @@ build:
         echo "=== Gymfile written ==="
         cat "$PROJECT_ROOT/ios/Gymfile"
 
-        # 5. Run fastlane gym directly
+        # 5. Extend keychain timeout (pod install may lock it) and verify signing
+        echo "=== Keychain setup ==="
+        security list-keychains 2>&1 || true
+        DEFAULT_KC=$(security default-keychain 2>/dev/null | tr -d '"' | tr -d ' ')
+        echo "Default keychain: $DEFAULT_KC"
+        security set-keychain-settings -t 3600 "$DEFAULT_KC" 2>/dev/null || true
+        security unlock-keychain "$DEFAULT_KC" 2>/dev/null || true
+        echo "=== Available signing identities ==="
+        security find-identity -v -p codesigning 2>&1 || true
+
+        # 6. Run fastlane gym directly
         echo "=== Running fastlane gym ==="
         cd "$PROJECT_ROOT/ios"
         fastlane gym 2>&1
