@@ -58,13 +58,17 @@ build:
           2>&1
         echo "=== Archive complete ==="
 
-        # 6. Create ExportOptions.plist
-        python3 -c "
-import plistlib, os
-opts = {'method': 'ad-hoc', 'teamID': 'H72SV43N57', 'compileBitcode': False, 'uploadBitcode': False}
-with open('/tmp/ExportOptions.plist', 'wb') as f: plistlib.dump(opts, f)
-print('ExportOptions.plist written')
-"
+        # 6. Create ExportOptions.plist (printf avoids heredoc YAML parse issue)
+        printf '%s\n' \
+          '<?xml version="1.0" encoding="UTF-8"?>' \
+          '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+          '<plist version="1.0"><dict>' \
+          '<key>method</key><string>ad-hoc</string>' \
+          '<key>teamID</key><string>H72SV43N57</string>' \
+          '<key>compileBitcode</key><false/>' \
+          '<key>uploadBitcode</key><false/>' \
+          '</dict></plist>' > /tmp/ExportOptions.plist
+        echo "ExportOptions.plist written"
 
         # 7. Export IPA
         IPA_DIR="$PROJECT_ROOT/ipa_output"
