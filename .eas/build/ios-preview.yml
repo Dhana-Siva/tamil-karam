@@ -27,32 +27,23 @@ build:
           echo "ERROR: KEYBOARD_PROVISIONING_PROFILE_B64 is not set!"
           exit 1
         fi
-        echo "Secret is set, length: ${#KEYBOARD_PROVISIONING_PROFILE_B64}"
 
         echo "$KEYBOARD_PROVISIONING_PROFILE_B64" | base64 -d > /tmp/keyboard.mobileprovision
-        echo "Profile decoded OK, size: $(wc -c < /tmp/keyboard.mobileprovision) bytes"
-
         security cms -D -i /tmp/keyboard.mobileprovision > /tmp/keyboard.plist 2>&1
-        echo "CMS decode exit: $?"
-        KEYBOARD_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/keyboard.plist 2>/dev/null || true)
+        KEYBOARD_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/keyboard.plist 2>/dev/null || python3 -c "import plistlib; print(plistlib.load(open('/tmp/keyboard.plist','rb'))['UUID'])" 2>/dev/null)
         if [ -z "$KEYBOARD_UUID" ]; then
-          echo "PlistBuddy failed, trying python3..."
-          KEYBOARD_UUID=$(python3 -c "import plistlib; print(plistlib.load(open('/tmp/keyboard.plist','rb'))['UUID'])" 2>/dev/null || true)
-        fi
-        if [ -z "$KEYBOARD_UUID" ]; then
-          echo "ERROR: UUID extraction failed. Plist content:"
-          head -30 /tmp/keyboard.plist
+          echo "ERROR: Could not extract keyboard profile UUID"
           exit 1
         fi
         echo "=== Keyboard UUID: $KEYBOARD_UUID ==="
 
         cp /tmp/keyboard.mobileprovision "$PROFILES_DIR/$KEYBOARD_UUID.mobileprovision"
-        echo "Profile installed: $PROFILES_DIR/$KEYBOARD_UUID.mobileprovision"
+        echo "Profile installed: $KEYBOARD_UUID.mobileprovision"
 
-        # 3. Patch pbxproj
+        # 3. Patch pbxproj: set UUID as PROVISIONING_PROFILE_SPECIFIER
         PBXPROJ="$PROJECT_ROOT/ios/app.xcodeproj/project.pbxproj"
         sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = \"Tamil Karam Keyboard AdHoc\";/PROVISIONING_PROFILE_SPECIFIER = \"$KEYBOARD_UUID\";/g" "$PBXPROJ"
-        echo "=== Provisioning lines after patch: ==="
+        echo "=== Provisioning lines after patch ==="
         grep "PROVISIONING_PROFILE" "$PBXPROJ" || true
 
         # 4. Write Gymfile
@@ -70,3 +61,6 @@ build:
         echo "=== Gymfile written ==="
         cat "$PROJECT_ROOT/ios/Gymfile"
         echo "=== prepare_build DONE ==="
+
+    - eas/run_fastlane
+    - eas/find_and_upload_build_artifacts
