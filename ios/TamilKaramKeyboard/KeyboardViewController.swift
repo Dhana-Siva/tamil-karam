@@ -137,7 +137,7 @@ class KeyboardViewController: UIInputViewController {
 
     private lazy var limitTitleLabel: UILabel = {
         let lbl = UILabel()
-        lbl.text = "🎉 You've used your 30 free corrections!"
+        lbl.text = "🎉 You've used your 50 free corrections!"
         lbl.font = .systemFont(ofSize: 14, weight: .semibold)
         lbl.textColor = UIColor.systemOrange
         lbl.textAlignment = .center
@@ -148,7 +148,7 @@ class KeyboardViewController: UIInputViewController {
 
     private lazy var limitBodyLabel: UILabel = {
         let lbl = UILabel()
-        lbl.text = "Tamil Karam uses Claude AI to fix your grammar — a small subscription helps cover the AI cost and keeps corrections fast & accurate. 🙏\n\nFree corrections reset on the 1st of next month."
+        lbl.text = "Tamil Karam uses Claude AI to fix your grammar — a small subscription helps cover the AI cost and keeps corrections fast & accurate. 🙏\n\nYour 50 free corrections reset on the 1st of next month."
         lbl.font = .systemFont(ofSize: 12)
         lbl.textColor = .secondaryLabel
         lbl.textAlignment = .center
@@ -300,7 +300,7 @@ class KeyboardViewController: UIInputViewController {
 
                 // Limit reached — show friendly message
                 if let errCode = json["error"] as? String, errCode == "limit_reached" {
-                    self?.setStatus("🙏 30 free corrections used this month!")
+                    self?.setStatus("🙏 50 free corrections used this month!")
                     self?.showLimitMessage()
                     return
                 }
